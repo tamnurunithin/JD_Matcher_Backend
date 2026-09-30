@@ -1,11 +1,23 @@
 import json
+
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
+
 from app.config import GROQ_API_KEY, GROQ_MODEL
 
+
+# ==========================================================
+# Create Groq LLM
+# ==========================================================
+
 def get_llm():
+
     if not GROQ_API_KEY:
-        raise ValueError("GROQ_API_KEY is missing. Add it in Render environment variables or backend/.env.")
+        raise ValueError(
+            "GROQ_API_KEY is missing. "
+            "Add it in Render environment variables "
+            "or backend/.env."
+        )
 
     return ChatGroq(
         groq_api_key=GROQ_API_KEY,
@@ -13,14 +25,34 @@ def get_llm():
         temperature=0.2,
     )
 
-def generate_ai_match_analysis(resume_text: str, job_description: str, semantic_matches):
+
+# ==========================================================
+# Generate AI Match Analysis
+# ==========================================================
+
+def generate_ai_match_analysis(
+    resume_text: str,
+    job_description: str,
+    semantic_matches
+):
+    """
+    Generate AI-powered resume and job-description
+    matching analysis using Groq.
+    """
+
     llm = get_llm()
 
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            """
+    # ======================================================
+    # Prompt
+    # ======================================================
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """
 You are an ATS resume matching expert.
+
 Return only valid JSON.
 Do not include markdown.
 
@@ -34,10 +66,10 @@ JSON format:
   "tailored_resume_summary": "improved resume summary"
 }}
 """
-        ),
-        (
-            "human",
-            """
+            ),
+            (
+                "human",
+                """
 Resume:
 {resume_text}
 
@@ -47,20 +79,38 @@ Job Description:
 Semantic FAISS Matches:
 {semantic_matches}
 """
-        )
-    ])
+            )
+        ]
+    )
+
+    # ======================================================
+    # Create Chain
+    # ======================================================
 
     chain = prompt | llm
 
-    response = chain.invoke({
-        "resume_text": resume_text[:6000],
-        "job_description": job_description[:4000],
-        "semantic_matches": semantic_matches[:10],
-    })
+    # ======================================================
+    # Generate Response
+    # ======================================================
+
+    response = chain.invoke(
+        {
+            "resume_text": resume_text[:6000],
+            "job_description": job_description[:4000],
+            "semantic_matches": semantic_matches[:10],
+        }
+    )
+
+    # ======================================================
+    # Parse JSON Response
+    # ======================================================
 
     try:
+
         return json.loads(response.content)
+
     except json.JSONDecodeError:
+
         return {
             "ats_score": 0,
             "summary": response.content,
