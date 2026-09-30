@@ -1,8 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.routes.matcher_routes import router as matcher_router
 
-app = FastAPI(title="Resume JD Matcher API")
+
+app = FastAPI(
+    title="Resume JD Matcher API"
+)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,8 +17,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(matcher_router, prefix="/api")
+
+app.include_router(
+    matcher_router,
+    prefix="/api"
+)
+
 
 @app.get("/")
 def root():
-    return {"message": "Resume JD Matcher backend is running"}
+    return {
+        "message": "Resume JD Matcher backend is running"
+    }
